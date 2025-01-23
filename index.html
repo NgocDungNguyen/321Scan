@@ -1,0 +1,446 @@
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Bán Hàng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+        }
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-indigo-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-semibold">Hệ Thống Bán Hàng</h1>
+                <button id="cartBtn" class="p-2 bg-green-500 hover:bg-green-600 rounded-full transition relative shadow-md" aria-label="Giỏ Hàng">
+                    <i class="fas fa-shopping-cart text-sm"></i>
+                    <span id="cartItemCount" class="absolute -top-1 -right-1 bg-red-500 text-xs rounded-full h-4 w-4 flex items-center justify-center text-[10px]">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-6 max-w-4xl">
+        <section id="search-section" class="mb-6">
+            <div class="relative">
+                <input type="text" id="searchInput" 
+                    class="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition text-sm shadow-sm"
+                    placeholder="Tìm kiếm sản phẩm...">
+                <i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
+                <div id="searchResults" class="absolute w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto hidden"></div>
+            </div>
+        </section>
+
+        <section id="category-section" class="mb-6">
+            <h2 class="text-lg font-semibold mb-3">Danh mục sản phẩm</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <button class="category-btn bg-white hover:bg-indigo-100 text-indigo-600 font-medium py-2 px-4 rounded-lg shadow transition text-sm border border-indigo-200">Sữa Tắm/Dầu Xả</button>
+                <button class="category-btn bg-white hover:bg-indigo-100 text-indigo-600 font-medium py-2 px-4 rounded-lg shadow transition text-sm border border-indigo-200">Nước giặt/Nước Xả</button>
+                <button class="category-btn bg-white hover:bg-indigo-100 text-indigo-600 font-medium py-2 px-4 rounded-lg shadow transition text-sm border border-indigo-200">Mỹ Phẩm</button>
+                <button class="category-btn bg-white hover:bg-indigo-100 text-indigo-600 font-medium py-2 px-4 rounded-lg shadow transition text-sm border border-indigo-200">Chăm sóc da/tóc</button>
+                <button class="category-btn bg-white hover:bg-indigo-100 text-indigo-600 font-medium py-2 px-4 rounded-lg shadow transition text-sm border border-indigo-200">Bánh kẹo</button>
+                <button class="category-btn bg-white hover:bg-indigo-100 text-indigo-600 font-medium py-2 px-4 rounded-lg shadow transition text-sm border border-indigo-200">Vệ Sinh</button>
+                <button class="category-btn bg-white hover:bg-indigo-100 text-indigo-600 font-medium py-2 px-4 rounded-lg shadow transition text-sm border border-indigo-200">Đồ bếp</button>
+                <button class="category-btn bg-white hover:bg-indigo-100 text-indigo-600 font-medium py-2 px-4 rounded-lg shadow transition text-sm border border-indigo-200">Đồ điện</button>
+                <button class="category-btn bg-white hover:bg-indigo-100 text-indigo-600 font-medium py-2 px-4 rounded-lg shadow transition text-sm border border-indigo-200">Khác</button>
+            </div>
+        </section>
+
+        <section id="scanner-section" class="mb-6">
+            <div id="scanner-container" class="bg-black rounded-lg overflow-hidden aspect-video mb-3"></div>
+            <button id="scanBtn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg shadow transition text-sm flex items-center justify-center">
+                <i class="fas fa-barcode mr-2"></i>
+                Quét Mã Vạch
+            </button>
+        </section>
+
+        <section id="cart-section" class="bg-white rounded-lg shadow-lg p-4">
+            <h2 class="text-lg font-semibold mb-4">Giỏ Hàng</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="p-2">Sản phẩm</th>
+                            <th class="p-2">Giá</th>
+                            <th class="p-2">SL</th>
+                            <th class="p-2">Tổng</th>
+                            <th class="p-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cart-items">
+                    </tbody>
+                </table>
+            </div>
+            <div id="cart-total" class="text-right text-base font-semibold mt-4"></div>
+            <div class="mt-4">
+                <input type="number" id="paidAmount" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg mb-3 text-sm shadow-sm"
+                    placeholder="Nhập số tiền thanh toán">
+                <button id="calculateChangeBtn" class="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition text-sm shadow">
+                    Tính Tiền Thối
+                </button>
+                <div id="change-result" class="text-base font-semibold text-center mt-3"></div>
+            </div>
+        </section>
+    </main>
+
+    <div id="product-info" class="modal fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg w-full max-w-md mx-4 p-4 relative">
+            <button id="closeProductInfo" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-sm"></i>
+            </button>
+            <div class="flex flex-col items-center">
+                <img id="product-image" src="" alt="Product Image" class="w-48 h-48 object-cover rounded-lg mb-4">
+                <h2 id="product-title" class="text-lg font-semibold mb-2 text-center"></h2>
+                <p id="product-price" class="text-base text-indigo-600 font-semibold mb-2"></p>
+                <p id="product-description" class="text-sm text-gray-600 mb-4 text-center"></p>
+                <div class="flex items-center justify-center space-x-4 mb-4">
+                    <button class="quantity-btn minus bg-indigo-500 text-white w-8 h-8 rounded-full text-sm shadow">-</button>
+                    <input type="number" id="quantity" class="w-16 text-center border-2 border-gray-300 rounded-lg text-sm" value="1" min="1">
+                    <button class="quantity-btn plus bg-indigo-500 text-white w-8 h-8 rounded-full text-sm shadow">+</button>
+                </div>
+                <button id="addToCartBtn" class="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 transition text-sm shadow">
+                    Thêm vào giỏ hàng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="category-products" class="modal fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg w-full max-w-2xl mx-4 p-4 relative max-h-[90vh] overflow-y-auto">
+            <button id="closeCategoryProducts" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-sm"></i>
+            </button>
+            <h2 id="category-title" class="text-xl font-semibold mb-4 text-center"></h2>
+            <div id="category-products-list" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <!-- Products will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-indicator" class="fixed inset-0 bg-white bg-opacity-90 hidden z-[1000] flex items-center justify-center">
+        <div class="animate-spin rounded-full h-10 w-10 border-4 border-indigo-500 border-t-transparent"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quagga"></script>
+    <script>
+        let productData = [];
+        let cartItems = [];
+        let isScanning = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadProductData();
+            setupEventListeners();
+            updateCartDisplay();
+        });
+
+        async function loadProductData() {
+            showLoading(true);
+            try {
+                const response = await fetch('product.json');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                productData = await response.json();
+                console.log('Loaded products:', productData);
+            } catch (error) {
+                console.error('Failed to load product data:', error);
+                alert('Không thể tải dữ liệu sản phẩm. Vui lòng thử lại sau.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', handleSearch);
+            document.getElementById('scanBtn').addEventListener('click', toggleScanner);
+            document.getElementById('cartBtn').addEventListener('click', toggleCart);
+            document.getElementById('closeProductInfo').addEventListener('click', closeProductInfo);
+            document.getElementById('addToCartBtn').addEventListener('click', addToCart);
+            document.getElementById('calculateChangeBtn').addEventListener('click', calculateChange);
+            document.getElementById('closeCategoryProducts').addEventListener('click', closeCategoryProducts);
+
+            const quantityBtns = document.querySelectorAll('.quantity-btn');
+            quantityBtns.forEach(btn => {
+                btn.addEventListener('click', handleQuantityChange);
+            });
+
+            const categoryBtns = document.querySelectorAll('.category-btn');
+            categoryBtns.forEach(btn => {
+                btn.addEventListener('click', () => showCategoryProducts(btn.textContent));
+            });
+        }
+
+        function handleSearch() {
+            const searchTerm = this.value.toLowerCase();
+            const results = productData.filter(product => 
+                product.Name.toLowerCase().includes(searchTerm) || 
+                product.Code.toString().includes(searchTerm)
+            );
+            displaySearchResults(results);
+        }
+
+        function displaySearchResults(results) {
+            const resultsContainer = document.getElementById('searchResults');
+            resultsContainer.innerHTML = '';
+
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<div class="p-4 text-gray-500">Không tìm thấy sản phẩm</div>';
+            } else {
+                results.forEach(product => {
+                    const div = document.createElement('div');
+                    div.className = 'p-4 hover:bg-gray-100 cursor-pointer border-b border-gray-200';
+                    div.innerHTML = `
+                        <div class="font-medium">${product.Name}</div>
+                        <div class="text-sm text-gray-600">Mã: ${product.Code}</div>
+                        <div class="text-indigo-600">${formatPrice(product.Price)}</div>
+                    `;
+                    div.addEventListener('click', () => showProductInfo(product));
+                    resultsContainer.appendChild(div);
+                });
+            }
+
+            resultsContainer.classList.toggle('hidden', results.length === 0);
+        }
+
+        function showProductInfo(product) {
+            document.getElementById('product-image').src = product.Image || 'https://placehold.co/300x300?text=No+Image';
+            document.getElementById('product-image').alt = product.Name;
+            document.getElementById('product-title').textContent = product.Name;
+            document.getElementById('product-price').textContent = `Giá: ${formatPrice(product.Price)}`;
+            document.getElementById('product-description').textContent = product.Description || 'Không có mô tả.';
+            document.getElementById('quantity').value = 1;
+            document.getElementById('product-info').classList.remove('hidden');
+        }
+
+        function closeProductInfo() {
+            document.getElementById('product-info').classList.add('hidden');
+        }
+
+        function showCategoryProducts(category) {
+            const categoryProducts = productData.filter(product => product.Category === category);
+            const categoryProductsList = document.getElementById('category-products-list');
+            categoryProductsList.innerHTML = '';
+
+            categoryProducts.forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'bg-white rounded-lg shadow p-4 flex flex-col items-center';
+                productDiv.innerHTML = `
+                    <img src="${product.Image || 'https://placehold.co/150x150?text=No+Image'}" alt="${product.Name}" class="w-24 h-24 object-cover rounded-lg mb-2">
+                    <h3 class="font-medium text-sm mb-1">${product.Name}</h3>
+                    <p class="text-indigo-600 text-sm">${formatPrice(product.Price)}</p>
+                `;
+                productDiv.addEventListener('click', () => {
+                    closeCategoryProducts();
+                    showProductInfo(product);
+                });
+                categoryProductsList.appendChild(productDiv);
+            });
+
+            document.getElementById('category-title').textContent = category;
+            document.getElementById('category-products').classList.remove('hidden');
+        }
+
+        function closeCategoryProducts() {
+            document.getElementById('category-products').classList.add('hidden');
+        }
+
+        function addToCart() {
+            const title = document.getElementById('product-title').textContent;
+            const price = parseFloat(document.getElementById('product-price').textContent.replace('Giá: ', '').replace('₫', '').replace('.', '').replace(',', '.'));
+            const quantity = parseInt(document.getElementById('quantity').value);
+
+            const existingItemIndex = cartItems.findIndex(item => item.title === title);
+            if (existingItemIndex !== -1) {
+                cartItems[existingItemIndex].quantity += quantity;
+            } else {
+                cartItems.push({ title, price, quantity });
+            }
+
+            updateCartDisplay();
+            closeProductInfo();
+        }
+
+        function updateCartDisplay() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            cartItemsContainer.innerHTML = '';
+
+            cartItems.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-2">${item.title}</td>
+                    <td class="p-2">${formatPrice(item.price)}</td>
+                    <td class="p-2">
+                        <input type="number" value="${item.quantity}" min="1" 
+                            class="w-12 text-center border rounded text-sm"
+                            onchange="updateItemQuantity(${index}, this.value)">
+                    </td>
+                    <td class="p-2">${formatPrice(item.price * item.quantity)}</td>
+                    <td class="p-2">
+                        <button onclick="removeCartItem(${index})" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                cartItemsContainer.appendChild(tr);
+            });
+
+            const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            document.getElementById('cart-total').textContent = `Tổng cộng: ${formatPrice(total)}`;
+            document.getElementById('cartItemCount').textContent = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+        }
+
+        function updateItemQuantity(index, newQuantity) {
+            cartItems[index].quantity = parseInt(newQuantity);
+            updateCartDisplay();
+        }
+
+        function removeCartItem(index) {
+            cartItems.splice(index, 1);
+            updateCartDisplay();
+        }
+
+        function toggleCart() {
+            const cartSection = document.getElementById('cart-section');
+            cartSection.classList.toggle('hidden');
+        }
+
+        function handleQuantityChange(event) {
+            const input = document.getElementById('quantity');
+            let value = parseInt(input.value);
+
+            if (event.target.classList.contains('minus')) {
+                value = Math.max(1, value - 1);
+            } else if (event.target.classList.contains('plus')) {
+                value++;
+            }
+
+            input.value = value;
+        }
+
+        function calculateChange() {
+            const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const paid = parseFloat(document.getElementById('paidAmount').value);
+
+            if (isNaN(paid)) {
+                alert('Vui lòng nhập số tiền hợp lệ.');
+                return;
+            }
+
+            const change = paid - total;
+            const changeResult = document.getElementById('change-result');
+
+            if (change >= 0) {
+                changeResult.textContent = `Tiền thối: ${formatPrice(change)}`;
+                changeResult.classList.remove('text-red-500');
+                changeResult.classList.add('text-green-500');
+            } else {
+                changeResult.textContent = `Thiếu: ${formatPrice(Math.abs(change))}`;
+                changeResult.classList.remove('text-green-500');
+                changeResult.classList.add('text-red-500');
+            }
+        }
+
+        function toggleScanner() {
+            const scannerContainer = document.getElementById('scanner-container');
+            if (isScanning) {
+                Quagga.stop();
+                scannerContainer.innerHTML = '';
+            } else {
+                startScanner();
+            }
+            isScanning = !isScanning;
+        }
+
+        function startScanner() {
+            const scannerContainer = document.getElementById('scanner-container');
+            scannerContainer.scrollIntoView({ behavior: 'smooth' });
+            
+            showLoading(true);
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: scannerContainer,
+                    constraints: {
+                        facingMode: "environment",
+                        aspectRatio: { min: 1, max: 2 }
+                    }
+                },
+                decoder: {
+                    readers: [
+                        "ean_reader",
+                        "ean_8_reader",
+                        "code_128_reader",
+                        "code_39_reader",
+                        "code_39_vin_reader",
+                        "codabar_reader",
+                        "upc_reader",
+                        "upc_e_reader",
+                        "i2of5_reader"
+                    ],
+                    multiple: false
+                },
+                locate: true,
+                locator: {
+                    patchSize: "medium",
+                    halfSample: true
+                }
+            }, function(err) {
+                if (err) {
+                    console.error('Lỗi khởi tạo máy quét:', err);
+                    alert('Không thể khởi động máy quét. Vui lòng kiểm tra camera của bạn.');
+                    showLoading(false);
+                    return;
+                }
+                Quagga.start();
+                showLoading(false);
+            });
+
+            Quagga.onDetected(handleScan);
+        }
+
+        function handleScan(result) {
+            const code = result.codeResult.code;
+            const product = productData.find(p => p.Code.toString() === code);
+            if (product) {
+                Quagga.stop();
+                isScanning = false;
+                showProductInfo(product);
+            } else {
+                if (!this.lastScanTime || Date.now() - this.lastScanTime > 2000) {
+                    alert('Không tìm thấy sản phẩm!');
+                    this.lastScanTime = Date.now();
+                }
+            }
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading-indicator').style.display = show ? 'flex' : 'none';
+        }
+
+        document.addEventListener('click', function(event) {
+            const searchResults = document.getElementById('searchResults');
+            const searchInput = document.getElementById('searchInput');
+            
+            if (!searchResults.contains(event.target) && event.target !== searchInput) {
+                searchResults.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
