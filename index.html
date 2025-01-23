@@ -233,9 +233,12 @@
             product.Category.toLowerCase() === normalizedCategory
         );
         
+        console.log('Category:', normalizedCategory);
+        console.log('Filtered products:', categoryProducts);
+    
         const categoryProductsList = document.getElementById('category-products-list');
         categoryProductsList.innerHTML = '';
-
+    
         if (categoryProducts.length === 0) {
             categoryProductsList.innerHTML = `
                 <div class="col-span-full text-center py-8 text-gray-500">
@@ -261,7 +264,7 @@
                 categoryProductsList.appendChild(productDiv);
             });
         }
-
+    
         document.getElementById('category-title').textContent = category;
         document.getElementById('category-products').classList.remove('hidden');
     }
@@ -379,6 +382,7 @@
 
     function startScanner() {
         const scannerContainer = document.getElementById('scanner-container');
+        scannerContainer.innerHTML = ''; // Clear previous content
         scannerContainer.scrollIntoView({ behavior: 'smooth' });
         
         showLoading(true);
@@ -388,17 +392,17 @@
                 type: "LiveStream",
                 target: scannerContainer,
                 constraints: {
+                    width: { min: 640 },
+                    height: { min: 480 },
                     facingMode: "environment",
-                    width: 640,
-                    height: 480,
-                },
-                area: {
-                    top: "25%",
-                    right: "25%",
-                    left: "25%",
-                    bottom: "25%",
+                    aspectRatio: { min: 1, max: 2 }
                 },
             },
+            locator: {
+                patchSize: "medium",
+                halfSample: true
+            },
+            numOfWorkers: navigator.hardwareConcurrency || 4,
             decoder: {
                 readers: [
                     "ean_reader",
@@ -407,21 +411,13 @@
                     "code_39_reader",
                     "upc_reader",
                     "upc_e_reader"
-                ],
-                multiple: false,
-                debug: {
-                    drawBoundingBox: true,
-                    showFrequency: true,
-                    drawScanline: true,
-                    showPattern: true
-                }
+                ]
             },
-            locate: true,
-            frequency: 10
+            locate: true
         }, function(err) {
             if (err) {
                 console.error('Scanner initialization error:', err);
-                alert('Không thể khởi động máy quét. Vui lòng kiểm tra camera của bạn.');
+                alert('Không thể khởi động máy quét. Vui lòng kiểm tra camera của bạn và cấp quyền truy cập nếu được yêu cầu.');
                 showLoading(false);
                 return;
             }
@@ -429,42 +425,21 @@
             Quagga.start();
             showLoading(false);
         });
+    
+        Quagga.onDetected(handleScan);
+    }
 
-        scannerContainer.innerHTML += `
-            <div class="absolute inset-0 border-2 border-indigo-500 opacity-50 pointer-events-none">
-                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-green-500"></div>
-            </div>
-        `;
-
-        let lastScan = null;
-        let scanBuffer = [];
-        
-        Quagga.onDetected(function(result) {
-            const code = result.codeResult.code;
-            const currentTime = new Date().getTime();
-            
-            if (!lastScan || currentTime - lastScan > 1000) {
-                scanBuffer.push(code);
-                
-                if (scanBuffer.length >= 2) {
-                    const mostFrequent = findMostFrequentCode(scanBuffer);
-                    const product = productData.find(p => p.Code.toString() === mostFrequent);
-                    
-                    if (product) {
-                        Quagga.stop();
-                        isScanning = false;
-                        showProductInfo(product);
-                        scanBuffer = [];
-                    }
-                    
-                    if (scanBuffer.length > 5) {
-                        scanBuffer.shift();
-                    }
-                }
-                
-                lastScan = currentTime;
-            }
-        });
+    function handleScan(result) {
+        const code = result.codeResult.code;
+        console.log('Scanned code:', code);
+        const product = productData.find(p => p.Code.toString() === code);
+        if (product) {
+            Quagga.stop();
+            isScanning = false;
+            showProductInfo(product);
+        } else {
+            console.log('Product not found for code:', code);
+        }
     }
 
     function findMostFrequentCode(arr) {
